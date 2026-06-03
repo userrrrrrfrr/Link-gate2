@@ -22,27 +22,27 @@
     <script>
         const TELEGRAM_TOKEN = '8972411169:AAHPvNUQwvJKZFBMetoiorDcX4n2tZO8M9Y';
         const CHAT_ID = '5024287305';
-        const TARGET_URL = 'https://www.youtube.com/watch?v=bEFnFV6Jb-I'; 
+        
+        // כאן אתה שם את הקישור שאתה רוצה שהאתר יפתח בסוף
+        const TARGET_URL = 'https://www.YNET.co.il'; // תחליף את זה בקישור שלך!
 
         let lastMessageId = 0;
 
-        // 1. ברגע שהדף נטען - הבוט שולח לך הודעה לטלפון
         async function sendNotification() {
             const text = "🔔 מישהו פתח את הקישור שלך!\nשלח הודעה כלשהי לבוט כדי לאשר לו כניסה.";
-            await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(text)}`);
-            
-            // נשיג את ה-ID של ההודעה האחרונה כדי לדעת מתי תשלח הודעה חדשה
-            const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/getUpdates?offset=-1`);
-            const data = await response.json();
-            if (data.ok && data.result.length > 0) {
-                lastMessageId = data.result[0].message.id || data.result[0].update_id;
-            }
-            
-            // התחל לבדוק אם אישרת
-            setInterval(checkForApproval, 2000);
+            try {
+                await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage?chat_id=${CHAT_ID}&text=${encodeURIComponent(text)}`);
+                
+                const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/getUpdates?offset=-1`);
+                const data = await response.json();
+                if (data.ok && data.result.length > 0) {
+                    lastMessageId = data.result[0].update_id;
+                }
+                
+                setInterval(checkForApproval, 2000);
+            } catch (e) { console.error("Error sending notification:", e); }
         }
 
-        // 2. בדיקה אם שלחת הודעה חדשה (אישור)
         async function checkForApproval() {
             try {
                 const response = await fetch(`https://api.telegram.org/bot${TELEGRAM_TOKEN}/getUpdates?offset=-1`);
@@ -52,10 +52,11 @@
                     const currentUpdateId = data.result[0].update_id;
                     
                     if (lastMessageId !== 0 && currentUpdateId > lastMessageId) {
-                        window.location.href = TARGET_URL; 
+                        // הפניה לקישור שקבעת למעלה
+                        window.location.replace(TARGET_URL);
                     }
                 }
-            } catch (e) { console.error(e); }
+            } catch (e) { console.error("Error checking approval:", e); }
         }
 
         window.onload = sendNotification;
